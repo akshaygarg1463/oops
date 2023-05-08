@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+class student {
+public:
+int backlogs;
+int noofsubjects;
+private:
+int attandance;
+public:
+void academics(){
+cout<<" grade";
+}
+int getattandance(){
+  return attandance;
+}
+void setattandence(int attandance){
+  //this operator use accesing attance from class
+   this ->attandance =attandance;
+}
+//constructor
+student(){
+  cout<<"namasta"<<endl;
+}
+};
+int main(){
+  //static memory
+ student akshay;
+  akshay.backlogs = 0;
+  akshay.noofsubjects =4;
+  akshay.setattandence(70);
+ cout<< akshay.getattandance();
+  akshay.academics();
+  //dynamic memory
+  student*geeta = new student;
+  geeta->backlogs =2;
+  geeta->noofsubjects =5;
+  geeta->setattandence(54);
+  cout<<geeta->getattandance();
+  
+}
