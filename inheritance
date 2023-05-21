@@ -1,0 +1,37 @@
+//base class = public,child class = protected
+//only accessaiable inside the class 
+#include <bits/stdc++.h>
+using namespace std;
+class school{
+  public:
+  int pincode;
+};
+  class student:protected school{
+public:
+  void print(){
+    cout<<this->pincode;
+  }
+  };
+int main() {
+student akshay;
+akshay.print();
+}
+
+//base class = public,child class = private
+//only accessaiable inside the class 
+#include <bits/stdc++.h>
+using namespace std;
+class school{
+  public:
+  int pincode;
+};
+  class student:private school{
+public:
+  void print(){
+    cout<<this->pincode;
+  }
+  };
+int main() {
+student akshay;
+akshay.print();
+}
