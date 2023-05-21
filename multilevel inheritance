@@ -1,0 +1,24 @@
+//multi-level inheritance
+#include <bits/stdc++.h>
+using namespace std;
+class school{
+  public:
+  int pincode;
+};
+  class student:public school{
+public:
+int section;  
+};
+class boy:public student{
+public: 
+int name;
+};
+  
+int main() {
+student akshay;
+cout<<akshay.pincode;
+boy sudher;
+  cout<<sudher.pincode <<endl;
+  cout<<sudher.name;
+  
+}
