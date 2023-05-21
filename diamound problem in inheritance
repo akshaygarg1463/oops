@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+class school{
+  public:
+  int section;
+school(){
+  section =3;
+}
+};
+  class student{
+public:
+int section;  
+ student(){
+   section =2;
+ }
+};
+class boy:public student,public school{
+public: 
+string name;
+};
+  
+int main() {
+boy akshay;
+cout<<akshay.school::section<<" "<<akshay.student::section<<" "<<akshay.name;
+}
