@@ -1,0 +1,22 @@
+//funtion overloading
+// in function overloading we can make use same function name but they should differ in the no of parameters in them
+// we can't change the datatypes of the funtion to achive funtion overloading 
+#include <bits/stdc++.h>
+using namespace std;
+class car{
+public:
+int under10k(int a,int b){
+  cout<<"2 parameters";
+  return a+b;
+}
+int under10k(int a,int b,int c){
+   cout<<"3 parameters";
+  return a+b+c;
+}
+};
+  
+int main() {
+car duster;
+  cout<<duster.under10k(5,4)<<endl;
+   cout<<duster.under10k(5,4,2)<<endl;
+}
