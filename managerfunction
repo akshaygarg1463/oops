@@ -1,0 +1,172 @@
+package ServiceLayer;
+
+import java.util.List;
+import Authentication.Authantication;
+import constantclass.ConstantClass.invalid;
+import constantclass.ConstantClass.printstatements;
+import constantclass.ConstantClass.project_col;
+import constantclass.ConstantClass.roles;
+import constantclass.ConstantClass.status;
+import databaselayer.Employee_Database;
+import databaselayer.ProjectDatabase;
+import databaselayer.TaskassignDatabase;
+
+public class CEO_funtion extends Employee_funtion {
+
+    /*
+    *******************************************************************************************************
+    *   @Constructor Name   : CEO_funtion
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Constructor to initialize the CEO functionality with the employee ID.
+    *   @Parameters         : 
+    *                         - id: The unique identifier of the employee (CEO).
+    *   @Return             : None
+    *******************************************************************************************************
+    */
+    
+
+   
+    /*
+    *******************************************************************************************************
+    *   @Method Name        : approveproject
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Fetches the list of projects that are not started yet and allows the CEO 
+    *                         to approve or reject them. It then updates the project status accordingly.
+    *   @Parameters         : None
+    *   @Return             : None
+    *******************************************************************************************************
+    */
+    public void approveproject() {
+        String result = ProjectDatabase.Project_yet_to_start(status.notstarted.getstatus());
+
+        if (result.contains(project_col.no_project.getproject())) {
+            System.out.println(project_col.no_project_available.getproject());
+            return;
+        }
+
+       
+        System.out.println(result);
+        System.out.println(project_col.Enter_projectid_to_start.getproject());
+        String project_id = in.nextLine();
+
+        System.out.println(printstatements.action_to_perform.getprintstatements());
+        int actionChoice = in.nextInt();
+        in.nextLine();  
+
+        if (actionChoice == 1) {
+            if (ProjectDatabase.set_Status_of_project(status.rejected.getstatus(), project_id)) {
+                System.out.println(status.status_change_to_rejected.getstatus());
+            } else {
+                System.out.println(invalid.error_project_rejected.getinvalid());
+            }
+        } else if (actionChoice == 2) {
+            if (ProjectDatabase.set_Status_of_project(status.inprogress.getstatus(), project_id)) {
+                System.out.println(status.project_started.getstatus());
+            } else {
+                System.out.println(invalid.error_in_starting_project.getinvalid());
+            }
+        } else {
+            // If the choice is invalid, inform the CEO
+            System.out.println(invalid.enter_valid_choice.getinvalid());
+        }
+    }
+
+    /*
+    *******************************************************************************************************
+    *   @Method Name        : assign_task_id_to_manager
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : This method assigns a task ID to a manager. The CEO selects a task ID, 
+    *                         chooses a project, and assigns a task to an employee.
+    *   @Parameters         : None
+    *   @Return             : None
+    *******************************************************************************************************
+    */
+    public void assign_task_id_to_manager() {
+        ProjectDatabase.Project_yet_to_start(status.inprogress.getstatus());
+        
+        System.out.println(printstatements.Enter_the_taskid.getprintstatements());
+        String taskid = in.nextLine();
+        
+        if (taskid.equals("0")) {
+            System.out.println(printstatements.returning_to_menu.getprintstatements());
+            return;
+        }
+
+        if (Authantication.taskidforManager(taskid)) {
+            System.out.println(printstatements.Enter_the_projectid.getprintstatements());
+            String project_id = in.nextLine();
+            if (project_id.equals("0")) {
+                System.out.println(printstatements.returning_to_menu.getprintstatements());
+                return;
+            }
+            
+            String projectname = ProjectDatabase.project_name(project_id);
+
+            System.out.println(printstatements.employeeid_for_manager.getprintstatements());
+            List<String> availableEmployeeIds = getEmployeeIdsForManager();
+
+            for (int i = 0; i < availableEmployeeIds.size(); i++) {
+                System.out.println((i + 1) + ". " + availableEmployeeIds.get(i));
+            }
+
+            System.out.println("Enter the number corresponding to the employee ID you want to assign to:");
+            int choice = Integer.parseInt(in.nextLine());
+
+            if (choice == 0) {
+                System.out.println(printstatements.returning_to_menu.getprintstatements());
+                return;
+            }
+
+            if (choice > 0 && choice <= availableEmployeeIds.size()) {
+                String selectedEmployeeId = availableEmployeeIds.get(choice - 1);
+                TaskassignDatabase.insert_into_task_asign(taskid, projectname, selectedEmployeeId, roles.MANAGER.getRole(), project_id);
+                System.out.println("Task successfully assigned to manager.");
+            } else {
+                System.out.println("Invalid choice. Please select a valid employee from the list.");
+                assign_task_id_to_manager(); 
+            }
+        } else {
+            System.out.println(invalid.Wrong_format_manager.getinvalid());
+            assign_task_id_to_manager(); 
+        }
+    }
+
+    /*
+    *******************************************************************************************************
+    *   @Method Name        : getEmployeeIdsForManager
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Helper method to fetch employee IDs for managers by querying the Employee 
+    *                         database.
+    *   @Parameters         : None
+    *   @Return             : List<String>: List of employee IDs that are available for managers.
+    *******************************************************************************************************
+    */
+    public List<String> getEmployeeIdsForManager() {
+        return Employee_Database.roleid(roles.MANAGER.getRole());
+    }
+
+    /*
+    *******************************************************************************************************
+    *   @Method Name        : approve_leave
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Method to approve leave requests by invoking the leaveapproval class 
+    *                         and calling its approve_leave method.
+    *   @Parameters         : None
+    *   @Return             : None
+    *******************************************************************************************************
+    */
+   public void approve_leave() {
+        leaveapproval a = new leaveapproval(id);
+        a.approve_leave(id);
+    }
+}
