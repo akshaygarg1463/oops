@@ -1,0 +1,140 @@
+package ControllerClass;
+
+import login.UserRoleFunction;
+import java.time.LocalDate;
+import java.util.Scanner;
+import ServiceLayer.Employee_funtion;
+import constantclass.ConstantClass.column;
+import constantclass.ConstantClass.invalid;
+import constantclass.ConstantClass.printstatements;
+import databaselayer.EmployeeManagerDatabase;
+public class EmployeeController implements UserRoleFunction {
+  
+    String id;
+    static LocalDate date = LocalDate.now();
+    Scanner in = new Scanner(System.in);
+    String managerid;
+    Employee_funtion employee = new Employee_funtion();
+
+public EmployeeController(String id) {
+        this.id = id;
+        this.managerid = EmployeeManagerDatabase.employee_manager(column.managerid.getcolumn(), id);
+    }
+
+    
+      /*
+    *******************************************************************************************************
+    *   @Method Name        : display_menu
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Displays the menu options for the employee to choose an action.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    
+    public void display_menu() {
+        System.out.println(printstatements.star.getprintstatements());  
+        System.out.println(printstatements.selectoperations.getprintstatements() + printstatements.exit_statement.getprintstatements());
+        System.out.println(printstatements.employee_menu.getprintstatements());
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : perform_action
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Executes the selected action based on the employee's menu choice.
+    *                         It handles invalid inputs and catches exceptions if necessary.
+    *   @Parameters         : 
+    *                         - choice: The menu choice selected by the employee.
+    *   @Return             : None
+    *   @Throws             : Exception: Catches and handles any exceptions during action execution.
+    *******************************************************************************************************
+    */
+    public void perform_action(int choice) {
+        boolean exitFlag = false;
+        while (!exitFlag) {  
+            try {
+                System.out.println(printstatements.star.getprintstatements());
+                display_menu();
+                System.out.println(printstatements.star.getprintstatements());
+                System.out.println(printstatements.Enter_your_choice.getprintstatements());
+
+                try {
+                    choice = Integer.parseInt(in.nextLine());
+                    exitFlag = perform_action_helper(choice); 
+                } catch (NumberFormatException e) {
+                    System.out.println(invalid.invalid_input.getinvalid());
+                    continue;
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                break;
+            } catch (Exception e) {
+                System.out.println(invalid.unexpected_error.getinvalid() + e.getMessage());
+            }
+        }
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : perform_action_helper
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Handles specific actions based on the menu choice made by the employee.
+    *   @Parameters         : 
+    *                         - choice: The menu choice selected by the employee.
+    *   @Return             : boolean: Returns true to exit the loop or false to continue.
+    *   @Throws             : Exception: Throws exception if any unexpected errors occur during the action.
+    *******************************************************************************************************
+    */
+    public boolean perform_action_helper(int choice) throws Exception {
+        try {
+            switch (choice) {
+                case 0:
+                    System.out.println(printstatements.exitingthesystem.getprintstatements());
+                    return true;  
+
+                case 1:
+                    employee.project_detail();
+                    break;
+                case 2:
+                    employee.leave_request();
+                    break;
+                case 3:
+                    employee.changepassword();
+                    break;
+                case 4:
+                    employee.inTime();
+                    break;
+                case 5:
+                    employee.outTime();
+                    break;
+                case 6:
+                employee.timesheet();
+                    break;
+                case 7:
+                employee.add_Skills();
+                    break;
+                case 8:
+                employee.check_for_any_task_assigned();
+                    break;
+                case 9:
+                employee.employee_manager();
+                    break;
+                default:
+                    System.out.println(printstatements.default_statement.getprintstatements());
+                    break;
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+        return false;  
+    }
+
+}
