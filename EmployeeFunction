@@ -1,0 +1,470 @@
+package ServiceLayer;
+
+import databaselayer.*;
+import java.time.*;
+import java.util.HashMap;
+import java.util.Scanner;
+import Authentication.Authantication;
+import constantclass.ConstantClass.Skill;
+import constantclass.ConstantClass.column;
+import constantclass.ConstantClass.invalid;
+import constantclass.ConstantClass.printstatements;
+import constantclass.ConstantClass.status;
+
+/*
+    *******************************************************************************************************
+    *   @Class Name         : Employee_funtion
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : This class handles various operations related to an employee, including leave
+    *                         requests, project details, password changes, attendance, skills management,
+    *                         timesheet updates, and task assignments.
+    *   @Methods            : 
+    *                         
+    *                         - leave_request: Submits a leave request for the employee after validation.
+    *                         - add_Skills: Adds or updates skills for the employee.
+    *                         - project_detail: Displays details of the assigned project and role.
+    *                         - changepassword: Allows the employee to change their password.
+    *                         - inTime: Records the employee's in-time for attendance.
+    *                         - outTime: Records the employee's out-time for attendance and updates working hours.
+    *                         - timesheet: Updates the employee's timesheet with working hours and task description.
+    *                         - check_for_any_task_assigned: Checks if the employee has any assigned tasks.
+    *                         - employee_manager: Displays the employee's manager and CEO information.
+    *   @Throws             : Exception: Thrown in case of unexpected errors during action processing.
+    *******************************************************************************************************
+    */
+public class Employee_funtion  {
+    String id;
+    static LocalDate date = LocalDate.now();
+    Scanner in = new Scanner(System.in);
+    String managerid;
+
+   
+    
+
+      
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : getEmployeeDetail
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Fetches a specific employee detail based on the column.
+    *   @Parameters         : 
+    *                         - column: The column name for which the detail is to be fetched.
+    *   @Return             : String: Employee detail or null if not found.
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public String getEmployeeDetail(String column) {
+        String detail = Employee_Database.display_col(id, column);
+        if (detail == null || detail.isEmpty()) {
+            System.out.println("Error: Employee detail not found for column: " + column);
+            return null;
+        }
+        return detail;
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : leave_request
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Allows the employee to request leave after validating the dates.
+    *                         It checks for overlapping dates and ensures that leave days are valid.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void leave_request() {
+        // Validate start date input
+        LocalDate startDate = DateCheker.getValidatedDateInput(printstatements.Enter_startdate_or_press_0_to_exit.getprintstatements());
+        if (startDate == null) return;
+
+        // Validate end date input
+        LocalDate endDate = DateCheker.getValidatedDateInput(printstatements.Enter_enddate_or_press_0_to_exit.getprintstatements());
+        if (endDate == null) return;
+
+        // Check if the leave request is valid (no overlap)
+        boolean isValidLeave = isLeaveRequestValid(id, startDate, endDate);
+        if (!isValidLeave) {
+            System.out.println("Leave request is not valid due to overlapping dates.");
+            return;
+        }
+
+        // Calculate the number of leave days
+        long leaveDays = Duration.between(startDate.atStartOfDay(), endDate.atStartOfDay()).toDays();
+
+        // Validate the leave days count
+        if (leaveDays <= 0) {
+            System.out.println(invalid.invalid_dates.getinvalid());
+        } else {
+            // Submit the leave request
+            if (LeaveReqestdatabase.leave_request(id, startDate, endDate, date, leaveDays, managerid)) {
+                System.out.println(printstatements.leave_request_submitted.getprintstatements());
+            } else {
+                System.out.println(invalid.failed_leave_request.getinvalid());
+            }
+        }
+    }
+
+    // Check if the leave request is valid by ensuring no overlap with existing leaves
+    public boolean isLeaveRequestValid(String id, LocalDate requestedStartDate, LocalDate requestedEndDate) {
+        try {
+            HashMap<Integer, Object> leaveDates = AttendanceDatabase.leavedates(id);
+
+            // Iterate through existing leave dates and check for overlaps
+            for (int i = 1; i <= leaveDates.size(); i += 2) {
+                LocalDate existingStartDate = (LocalDate) leaveDates.get(i);
+                LocalDate existingEndDate = (LocalDate) leaveDates.get(i + 1);
+
+                // Check if requested leave dates overlap with existing leave dates
+                if (!(requestedEndDate.isBefore(existingStartDate) || requestedStartDate.isAfter(existingEndDate))) {
+                    System.out.println("Requested leave dates overlap with existing leave dates: " +
+                            "From " + existingStartDate + " to " + existingEndDate);
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error while validating leave request: " + e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : add_Skills
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Allows the employee to add or update their skills.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public boolean add_Skills() {
+        while (true) {
+            displayAvailableSkills();  // Display available skills
+            System.out.println(printstatements.enter_the_skiils.getprintstatements());
+            String skills = in.nextLine();
+
+            // Exit if user inputs "0"
+            if ("0".equals(skills)) {
+                System.out.println(printstatements.returning_to_menu.getprintstatements());
+                return false;
+            }
+
+            // Validate the skill input
+            if (skills.isEmpty()) {
+                System.out.println(invalid.invalid_skills.getinvalid());
+                continue;
+            }
+
+            // Check if the skill is valid
+            if (!isValidSkill(skills)) {
+                System.out.println(invalid.invalid_skills.getinvalid());
+                continue;
+            }
+
+            // Get current skills of the employee
+            String existingSkills = getEmployeeDetail(column.skills.getcolumn());
+
+            // Add or update skills based on the employee's existing skills
+            if (existingSkills == null || existingSkills.isEmpty()) {
+                Employee_Database.addskills(id, skills);
+                System.out.println(printstatements.skills_added.getprintstatements());
+                return true;
+            } else {
+                if (!existingSkills.contains(skills)) {
+                    existingSkills += ", " + skills;
+                    Employee_Database.addskills(id, existingSkills);
+                    System.out.println(printstatements.skills_updated.getprintstatements());
+                    return true;
+                } else {
+                    System.out.println(printstatements.skills_exist.getprintstatements());
+                    continue;
+                }
+            }
+        }
+    }
+
+    // Display the list of available skills
+    public void displayAvailableSkills() {
+        System.out.println(printstatements.available_skills.getprintstatements());
+        for (Skill skill : Skill.values()) {
+            System.out.println("- " + skill.getSkillName());
+        }
+    }
+
+    // Check if a skill is valid
+    public boolean isValidSkill(String skillName) {
+        for (Skill skill : Skill.values()) {
+            if (skill.getSkillName().equalsIgnoreCase(skillName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+      /*
+    *******************************************************************************************************
+    *   @Method Name        : project_detail
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Displays details of the project assigned to the employee, including role and tasks.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void project_detail() throws Exception {
+        HashMap<Integer, String> taskassigning = TaskassignDatabase.detailsfromtaskassigning(id);
+
+        if (taskassigning != null && taskassigning.get(2) != null && taskassigning.get(1) != null && taskassigning.get(3) != null) {
+            String projectname = taskassigning.get(2);
+            String taskid = taskassigning.get(1);
+            String role = taskassigning.get(3);
+
+            System.out.println("Project name: " + projectname);
+            System.out.println("Task ID: " + taskid);
+            System.out.println("Role: " + role);
+        } else {
+            System.out.println("No project yet.");
+        }
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : changepassword
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Allows the employee to change their password after validating the old password.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void changepassword() {
+        while (true) {
+            System.out.println("Enter new Password, or '0' to return to the menu: ");
+            String pass = in.nextLine();
+
+            if (pass.equals("0")) {
+                return; 
+            }
+
+            if (Authantication.passwordchecker(pass)) {
+                Employee_Database.update_password(id, pass);
+                System.out.println("Update successful");
+                break; 
+            } else {
+                System.out.println("Invalid password. Try again.");
+            }
+        }
+    }
+
+     /*
+    *******************************************************************************************************
+    *   @Method Name        : inTime
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Records the employee's in-time for attendance.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void inTime() {
+        LocalTime time = LocalTime.now();
+        if (AttendanceDatabase.login(id, date) != null) {
+            System.out.println("Already logged in for today.");
+            return;
+        }
+        String name = Employee_Database.display_col(id, column.name.getcolumn());
+
+        if (name == null || name.isEmpty()) {
+            System.out.println("Error: Employee name not found.");
+        } else {
+            if (AttendanceDatabase.insert_login(time, date, name, id)) {
+                System.out.println("Login time updated successfully.");
+            } else {
+                System.out.println("Error: Unable to update login time.");
+            }
+        }
+    }
+
+       /*
+    *******************************************************************************************************
+    *   @Method Name        : outTime
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Records the employee's out-time and calculates working hours for the day.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void outTime() {
+        LocalTime time = LocalTime.now();
+        int outhours = time.getHour();
+        LocalDate date = LocalDate.now();
+        boolean result;
+        String attendance_status;
+        LocalTime intime = AttendanceDatabase.login(id, date);
+        if (intime == null) {
+            System.out.println("Employee has not logged in yet");
+            return;
+        }
+        int inhours = intime.getHour();
+        int workinghours = outhours - inhours;
+
+        // Determine working hours and attendance status
+        if (workinghours >= 8) {
+            workinghours = 8;
+            attendance_status = status.fullday.getstatus();
+            result = AttendanceDatabase.insert_logout(time, attendance_status, workinghours, id, date);
+        } else if (workinghours > 5 && workinghours < 8) {
+            workinghours = 5;
+            attendance_status = status.halfday.getstatus();
+            result = AttendanceDatabase.insert_logout(time, attendance_status, workinghours, id, date);
+        } else {
+            workinghours = 0;
+            attendance_status = status.absent.getstatus();
+            result = AttendanceDatabase.insert_logout(time, attendance_status, workinghours, id, date);
+        }
+
+        // Output result
+        if (result) {
+            System.out.println("Out Time Updated");
+        } else {
+            System.out.println("Not able to update");
+        }
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : timesheet
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Updates the timesheet for the employee with the task description and working hours.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void timesheet() {
+        int workinghours = 0;
+        String description = "";
+
+        while (true) {
+            try {
+                System.out.println(printstatements.working_hours.getprintstatements());
+                String input = in.nextLine();
+                
+                if (input.equals("0")) {
+                    System.out.println(printstatements.returning_to_menu.getprintstatements());
+                    return;
+                }
+
+                workinghours = Integer.parseInt(input);
+
+                if (workinghours < 0 || workinghours > 8) {
+                    System.out.println(invalid.invalid_working_hours.getinvalid());
+                } else {
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(invalid.invalid_working_hours_input.getinvalid());
+            }
+        }
+
+        // Get task description
+        System.out.println(printstatements.description.getprintstatements());
+        description = in.nextLine();
+        
+        if (description.equals("0")) {
+            System.out.println(printstatements.returning_to_menu.getprintstatements());
+            return;
+        }
+
+        // Get the date of the timesheet entry
+        LocalDate date = null;
+        while (true) {
+            System.out.print(printstatements.enter_date.getprintstatements());
+            String dateString = in.nextLine();
+
+            if (dateString.equals("0")) {
+                System.out.println(printstatements.returning_to_menu.getprintstatements());
+                return;
+            }
+
+            if (!Authantication.datechecker(dateString)) {
+                System.out.println(invalid.invalid_date_format.getinvalid());
+            } else {
+                date = LocalDate.parse(dateString);
+                break;
+            }
+        }
+
+        // Insert timesheet data
+        TimesheetDatabase.insert_timesheet(id, description, TaskassignDatabase.col_from_taskassigning(id, column.taskid.getcolumn()), 
+                TaskassignDatabase.col_from_taskassigning(id, column.projectname.getcolumn()), 
+                workinghours, date);
+
+        System.out.println("Timesheet Updated Successfully");
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : check_for_any_task_assigned
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Checks whether the employee has any tasks assigned to them.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public boolean check_for_any_task_assigned() {
+        String role = getEmployeeDetail(column.role.getcolumn());
+        String result = TaskassignDatabase.details_from_taskassign(id, role);
+        
+        if (result.equals("No tasks assigned for this ID and role.") || result == null) {
+            System.out.println("No tasks assigned");
+            return false;
+        } else {
+            System.out.println(result);
+            return true;
+        }
+    }
+
+        /*
+    *******************************************************************************************************
+    *   @Method Name        : employee_manager
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Displays the details of the employee's manager and CEO.
+    *   @Parameters         : None
+    *   @Return             : None
+    *   @Throws             : None
+    *******************************************************************************************************
+    */
+    public void employee_manager() {
+        String managername = EmployeeManagerDatabase.employee_manager(column.managername.getcolumn(), id);
+        String ceoname = Employee_Database.column("CEO");
+        System.out.println("Manager Name: " + managername);
+        System.out.println("CEO Name: " + ceoname);
+    }
+}
