@@ -1,0 +1,76 @@
+package ControllerClass;
+
+import ServiceLayer.CEO_funtion;
+import constantclass.ConstantClass.printstatements;
+
+public class CeoController extends EmployeeController {
+    public CeoController(String id) {
+        super(id);  
+    }
+    CEO_funtion ceo = new CEO_funtion();
+     /*
+    *******************************************************************************************************
+    *   @Method Name        : display_menu
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Displays the menu options specific to the CEO role. It shows common menu 
+    *                         options from the parent class as well as CEO-specific options.
+    *   @Parameters         : None
+    *   @Return             : None
+    *******************************************************************************************************
+    */
+    @Override
+    public void display_menu() {
+        System.out.println(printstatements.star.getprintstatements()); // Print separator (stars)
+        super.display_menu(); // Call parent class method to display common menu options
+        System.out.println(printstatements.ceo_menu.getprintstatements()); // Display CEO-specific menu options
+    }
+
+    /*
+    *******************************************************************************************************
+    *   @Method Name        : perform_action_helper
+    *   @Author             : Akshay Garg (akshay.garg@antrazal.com)
+    *   @Company            : Antrazal
+    *   @Date               : 22-02-2025
+    *   @Description        : Handles the action based on user choice. It triggers appropriate methods
+    *                         like project approval, task assignment, and leave approval based on the
+    *                         CEO's menu choice.
+    *   @Parameters         : 
+    *                         - choice: The action choice made by the CEO.
+    *   @Return             : boolean: Returns false if the action is successfully handled or passed to the 
+    *                         parent class for further handling.
+    *   @Throws             : Exception: If there are any exceptions during action processing.
+    *******************************************************************************************************
+    */
+    @Override
+    public boolean perform_action_helper(int choice) throws Exception {
+        try {
+            switch (choice) {
+                case 10:
+                    // If choice is 10, trigger project approval process
+                   ceo.approveproject();  
+                    break;
+
+                case 11:
+                    
+                ceo.assign_task_id_to_manager(); 
+                    break;
+
+                case 12:
+                    
+                    ceo.approve_leave();  
+                    break;
+
+                default:
+                    
+                    return super.perform_action_helper(choice);  
+            }
+        } catch (Exception e) {
+          
+            throw e;
+        }
+        return false;  
+    }
+
+}
